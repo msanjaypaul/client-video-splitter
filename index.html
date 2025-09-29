@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Video Splitter - Client-Side Processing</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Video Splitter — Free & Client-Side</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/@ffmpeg/ffmpeg@0.12.6/dist/ffmpeg.min.js"></script>
     <script src="https://unpkg.com/jszip@3.10.1/dist/jszip.min.js"></script>
@@ -13,8 +13,8 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#6366f1',
-                        'primary-dark': '#4f46e5',
+                        primary: { 500: '#4f46e5', 600: '#4338ca' },
+                        surface: { light: '#ffffff', dark: '#1e1b4b' }
                     }
                 }
             }
@@ -23,10 +23,13 @@
     <style>
         .video-timeline {
             height: 8px;
-            background-color: #374151;
+            background-color: #e5e7eb;
             position: relative;
             border-radius: 4px;
             cursor: pointer;
+        }
+        .dark .video-timeline {
+            background-color: #374151;
         }
         .video-progress {
             height: 100%;
@@ -43,6 +46,7 @@
             border-radius: 2px;
             transform: translateX(-50%);
             cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
         }
         .marker::after {
             content: '';
@@ -55,32 +59,45 @@
             background-color: #ef4444;
         }
         .file-drop-area {
-            transition: all 0.3s ease;
+            transition: all 0.25s ease;
+            border: 2px dashed #d1d5db;
         }
         .file-drop-area.drag-over {
-            border-color: #818cf8;
-            background-color: rgba(129, 140, 248, 0.1);
+            border-color: #4f46e5;
+            background-color: rgba(79, 70, 229, 0.05);
+        }
+        .dark .file-drop-area.drag-over {
+            background-color: rgba(79, 70, 229, 0.15);
         }
         .progress-bar {
             height: 6px;
-            background-color: #374151;
+            background-color: #e5e7eb;
             border-radius: 3px;
             overflow: hidden;
         }
+        .dark .progress-bar {
+            background-color: #374151;
+        }
         .progress-fill {
             height: 100%;
-            background-color: #818cf8;
+            background: linear-gradient(to right, #818cf8, #4f46e5);
             width: 0%;
             transition: width 0.3s ease;
         }
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
     </style>
 </head>
-<body class="bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen">
+<body class="bg-gray-50 text-gray-800 dark:bg-gray-900 dark:text-gray-200 min-h-screen">
     <div class="container mx-auto px-4 py-8 max-w-4xl">
         <!-- Header -->
-        <header class="flex justify-between items-center mb-8">
-            <h1 class="text-3xl font-bold text-primary">Video Splitter</h1>
-            <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700">
+        <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-10">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 dark:text-white">Video Splitter</h1>
+                <p class="text-gray-600 dark:text-gray-400 mt-1">Split videos right in your browser — no uploads, no tracking.</p>
+            </div>
+            <button id="darkModeToggle" class="p-2.5 rounded-lg bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 dark:hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
                 </svg>
@@ -91,160 +108,163 @@
         </header>
 
         <!-- Upload Section -->
-        <section id="uploadSection" class="mb-8">
-            <div id="fileDropArea" class="file-drop-area border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl p-8 text-center cursor-pointer transition-colors">
+        <section id="uploadSection" class="mb-10">
+            <div id="fileDropArea" class="file-drop-area rounded-2xl p-10 text-center cursor-pointer">
                 <div class="flex flex-col items-center justify-center">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
-                    </svg>
-                    <p class="text-lg font-medium mb-2">Drag & drop your video file here</p>
-                    <p class="text-gray-500 dark:text-gray-400 mb-4">Supports MP4, MOV, MKV, AVI, WebM</p>
-                    <button id="filePickerBtn" class="px-4 py-2 bg-primary text-white rounded-lg font-medium hover:bg-primary-dark transition-colors">
-                        Browse Files
+                    <div class="p-4 bg-indigo-50 dark:bg-indigo-900/20 rounded-full mb-5">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                        </svg>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 dark:text-white mb-2">Drag & drop your video</h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-5 max-w-md">
+                        Supports MP4, MOV, MKV, AVI, WebM • All processing happens in your browser
+                    </p>
+                    <button id="filePickerBtn" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-sm transition-colors">
+                        Choose Video File
                     </button>
                     <input type="file" id="fileInput" accept="video/*" class="hidden" />
                 </div>
             </div>
         </section>
 
-        <!-- Video Preview Section -->
-        <section id="previewSection" class="hidden mb-8">
-            <div class="bg-gray-800 rounded-xl overflow-hidden">
+        <!-- Preview & Options -->
+        <div id="configSection" class="hidden space-y-8 mb-10">
+            <!-- Video Preview -->
+            <section class="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm">
                 <video id="videoPreview" class="w-full" controls></video>
-                <div id="videoTimeline" class="video-timeline relative mt-2 px-4"></div>
-            </div>
-            <div class="mt-4 flex justify-center">
-                <button id="addMarkerBtn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium transition-colors">
-                    Add Cut Marker at Current Time
-                </button>
-                <button id="clearMarkersBtn" class="ml-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-medium transition-colors">
-                    Clear All Markers
-                </button>
-            </div>
-        </section>
+                <div id="videoTimeline" class="video-timeline relative mt-3 mx-4 mb-4"></div>
+                <div class="px-4 pb-4 flex flex-wrap gap-3">
+                    <button id="addMarkerBtn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 rounded-lg text-sm font-medium transition-colors">
+                        Add Cut Marker
+                    </button>
+                    <button id="clearMarkersBtn" class="px-4 py-2 bg-red-100 hover:bg-red-200 dark:bg-red-900/30 dark:hover:bg-red-900/50 text-red-700 dark:text-red-300 rounded-lg text-sm font-medium transition-colors">
+                        Clear Markers
+                    </button>
+                </div>
+            </section>
 
-        <!-- Split Options Section -->
-        <section id="optionsSection" class="hidden mb-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Split Mode Selection -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
-                    <h2 class="text-xl font-bold mb-4">Split Mode</h2>
+            <!-- Split Options -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">SplitOptions</h2>
                     <div class="space-y-3">
-                        <div class="flex items-center">
-                            <input type="radio" id="splitTime" name="splitMode" value="time" class="h-4 w-4 text-primary" checked>
-                            <label for="splitTime" class="ml-2 font-medium">Split by Fixed Time</label>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="radio" id="splitParts" name="splitMode" value="parts" class="h-4 w-4 text-primary">
-                            <label for="splitParts" class="ml-2 font-medium">Split into N Equal Parts</label>
-                        </div>
-                        <div class="flex items-center">
-                            <input type="radio" id="splitSize" name="splitMode" value="size" class="h-4 w-4 text-primary">
-                            <label for="splitSize" class="ml-2 font-medium">Split by Max File Size (MB)</label>
-                        </div>
+                        <label class="flex items-center">
+                            <input type="radio" name="splitMode" value="time" class="h-4 w-4 text-indigo-600" checked>
+                            <span class="ml-3 text-gray-700 dark:text-gray-300">Split by fixed time</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="splitMode" value="parts" class="h-4 w-4 text-indigo-600">
+                            <span class="ml-3 text-gray-700 dark:text-gray-300">Split into N equal parts</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="splitMode" value="size" class="h-4 w-4 text-indigo-600">
+                            <span class="ml-3 text-gray-700 dark:text-gray-300">Split by max file size (MB)</span>
+                        </label>
                     </div>
                 </div>
 
-                <!-- Audio Extraction -->
-                <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
-                    <h2 class="text-xl font-bold mb-4">Audio Extraction</h2>
-                    <div class="flex items-center">
-                        <input type="checkbox" id="extractAudio" class="h-4 w-4 text-primary">
-                        <label for="extractAudio" class="ml-2 font-medium">Extract Audio Only</label>
-                    </div>
-                    <div id="audioFormatOptions" class="mt-3 hidden">
-                        <div class="flex items-center mt-2">
-                            <input type="radio" id="audioMp3" name="audioFormat" value="mp3" class="h-4 w-4 text-primary" checked>
-                            <label for="audioMp3" class="ml-2">MP3</label>
-                        </div>
-                        <div class="flex items-center mt-2">
-                            <input type="radio" id="audioWav" name="audioFormat" value="wav" class="h-4 w-4 text-primary">
-                            <label for="audioWav" class="ml-2">WAV</label>
-                        </div>
+                <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                    <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Audio Extraction</h2>
+                    <label class="flex items-center mb-4">
+                        <input type="checkbox" id="extractAudio" class="h-4 w-4 text-indigo-600">
+                        <span class="ml-3 text-gray-700 dark:text-gray-300">Extract audio only</span>
+                    </label>
+                    <div id="audioFormatOptions" class="pl-7 hidden">
+                        <label class="flex items-center mt-2">
+                            <input type="radio" name="audioFormat" value="mp3" class="h-4 w-4 text-indigo-600" checked>
+                            <span class="ml-3 text-gray-700 dark:text-gray-300">MP3</span>
+                        </label>
+                        <label class="flex items-center mt-2">
+                            <input type="radio" name="audioFormat" value="wav" class="h-4 w-4 text-indigo-600">
+                            <span class="ml-3 text-gray-700 dark:text-gray-300">WAV</span>
+                        </label>
                     </div>
                 </div>
             </div>
 
             <!-- Input Fields -->
-            <div id="inputFields" class="mt-6 bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
-                <!-- Time-based input -->
-                <div id="timeInput" class="mb-4">
-                    <label class="block text-sm font-medium mb-2">Split every:</label>
-                    <div class="flex space-x-2">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
+                <div id="timeInput">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Split every:</label>
+                    <div class="flex gap-4">
                         <div class="flex-1">
-                            <input type="number" id="timeMinutes" min="0" value="1" class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700">
-                            <span class="text-sm text-gray-500 dark:text-gray-400">Minutes</span>
+                            <input type="number" id="timeMinutes" min="0" value="1" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Minutes</span>
                         </div>
                         <div class="flex-1">
-                            <input type="number" id="timeSeconds" min="0" max="59" value="0" class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700">
-                            <span class="text-sm text-gray-500 dark:text-gray-400">Seconds</span>
+                            <input type="number" id="timeSeconds" min="0" max="59" value="0" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Seconds</span>
                         </div>
                     </div>
                 </div>
 
-                <!-- Parts input -->
-                <div id="partsInput" class="mb-4 hidden">
-                    <label for="numParts" class="block text-sm font-medium mb-2">Number of parts:</label>
-                    <input type="number" id="numParts" min="2" value="2" class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700">
+                <div id="partsInput" class="hidden mt-4">
+                    <label for="numParts" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Number of parts:</label>
+                    <input type="number" id="numParts" min="2" value="2" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                 </div>
 
-                <!-- Size input -->
-                <div id="sizeInput" class="mb-4 hidden">
-                    <label for="maxSize" class="block text-sm font-medium mb-2">Max file size (MB):</label>
-                    <input type="number" id="maxSize" min="1" value="100" class="w-full p-2 border border-gray-300 dark:border-gray-700 rounded-lg bg-white dark:bg-gray-700">
+                <div id="sizeInput" class="hidden mt-4">
+                    <label for="maxSize" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Max file size (MB):</label>
+                    <input type="number" id="maxSize" min="1" value="100" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
                 </div>
             </div>
 
-            <!-- Social Media Presets -->
-            <div class="mt-6">
-                <h3 class="text-lg font-bold mb-3">Social Media Presets</h3>
+            <!-- Presets -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Quick Presets</h3>
                 <div class="flex flex-wrap gap-3">
-                    <button id="preset15s" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-colors">
-                        15s Clips (WhatsApp Status)
+                    <button id="preset15s" class="px-4 py-2.5 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/30 dark:hover:bg-blue-900/50 text-blue-800 dark:text-blue-200 rounded-xl font-medium transition-colors">
+                        15s Clips (WhatsApp)
                     </button>
-                    <button id="preset60s" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg font-medium transition-colors">
-                        60s Clips (TikTok/Reels)
+                    <button id="preset60s" class="px-4 py-2.5 bg-purple-100 hover:bg-purple-200 dark:bg-purple-900/30 dark:hover:bg-purple-900/50 text-purple-800 dark:text-purple-200 rounded-xl font-medium transition-colors">
+                        60s Clips (TikTok / Reels)
                     </button>
                 </div>
             </div>
-        </section>
 
-        <!-- Processing Section -->
-        <section id="processingSection" class="hidden mb-8">
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow text-center">
-                <h2 class="text-xl font-bold mb-4">Processing Video</h2>
+            <!-- ✅ THE MISSING BUTTON -->
+            <div class="text-center pt-4">
+                <button id="processBtn" disabled class="px-8 py-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white font-bold rounded-xl shadow-md transition-colors text-lg w-full sm:w-auto">
+                    Split Video
+                </button>
+            </div>
+        </div>
+
+        <!-- Processing -->
+        <section id="processingSection" class="hidden mb-10">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center shadow-sm">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-4">Processing Video</h2>
                 <div class="progress-bar mb-4">
                     <div id="progressFill" class="progress-fill"></div>
                 </div>
-                <p id="progressText" class="text-gray-600 dark:text-gray-300">Initializing...</p>
-                <div class="mt-4">
-                    <button id="cancelBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium transition-colors">
-                        Cancel
-                    </button>
-                </div>
+                <p id="progressText" class="text-gray-600 dark:text-gray-400">Initializing...</p>
+                <button id="cancelBtn" class="mt-4 px-5 py-2 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors">
+                    Cancel
+                </button>
             </div>
         </section>
 
-        <!-- Results Section -->
+        <!-- Results -->
         <section id="resultsSection" class="hidden">
-            <div class="bg-white dark:bg-gray-800 rounded-xl p-6 shadow">
-                <h2 class="text-xl font-bold mb-4">Split Complete!</h2>
-                <p class="mb-4">Your video has been successfully split into <span id="clipCount">0</span> clips.</p>
-                <div class="flex flex-wrap gap-3">
-                    <button id="downloadZipBtn" class="px-4 py-2 bg-primary hover:bg-primary-dark text-white rounded-lg font-medium transition-colors">
+            <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-sm text-center">
+                <h2 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Split Complete!</h2>
+                <p class="text-gray-600 dark:text-gray-400 mb-6">Your video has been split into <span id="clipCount" class="font-semibold">0</span> clips.</p>
+                <div class="flex flex-col sm:flex-row justify-center gap-4">
+                    <button id="downloadZipBtn" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-medium rounded-xl shadow-sm transition-colors">
                         Download All as ZIP
                     </button>
-                    <button id="downloadIndividualBtn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors">
-                        Download Individual Clips
+                    <button id="downloadIndividualBtn" class="px-6 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-medium rounded-xl transition-colors">
+                        Download Individually
                     </button>
                 </div>
-                <div id="individualDownloads" class="mt-4 hidden grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+                <div id="individualDownloads" class="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-3 hidden"></div>
             </div>
         </section>
 
-        <!-- Error Message -->
-        <div id="errorMessage" class="hidden bg-red-100 dark:bg-red-900/30 border border-red-300 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-4">
-            <p id="errorMessageText"></p>
+        <!-- Error -->
+        <div id="errorMessage" class="hidden bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl mb-4">
+            <p id="errorMessageText" class="text-center"></p>
         </div>
     </div>
 
@@ -253,10 +273,10 @@
         const fileDropArea = document.getElementById('fileDropArea');
         const fileInput = document.getElementById('fileInput');
         const filePickerBtn = document.getElementById('filePickerBtn');
-        const previewSection = document.getElementById('previewSection');
+        const configSection = document.getElementById('configSection');
         const videoPreview = document.getElementById('videoPreview');
         const videoTimeline = document.getElementById('videoTimeline');
-        const optionsSection = document.getElementById('optionsSection');
+        const processBtn = document.getElementById('processBtn');
         const processingSection = document.getElementById('processingSection');
         const resultsSection = document.getElementById('resultsSection');
         const errorMessage = document.getElementById('errorMessage');
@@ -280,136 +300,97 @@
         const preset15s = document.getElementById('preset15s');
         const preset60s = document.getElementById('preset60s');
 
-        // State variables
+        // State
         let currentFile = null;
         let markers = [];
         let ffmpeg = null;
         let isProcessing = false;
         let cancelProcessing = false;
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            // Dark mode toggle
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            // Dark mode
+            const isDark = localStorage.getItem('darkMode') === 'true';
+            if (isDark) document.documentElement.classList.add('dark');
             darkModeToggle.addEventListener('click', () => {
                 document.documentElement.classList.toggle('dark');
                 localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
             });
 
-            // Load dark mode preference
-            if (localStorage.getItem('darkMode') === 'true') {
-                document.documentElement.classList.add('dark');
-            } else if (localStorage.getItem('darkMode') === 'false') {
-                document.documentElement.classList.remove('dark');
-            }
-
-            // File input handling
+            // File handling
             filePickerBtn.addEventListener('click', () => fileInput.click());
             fileInput.addEventListener('change', handleFileSelect);
-            
-            // Drag and drop
-            fileDropArea.addEventListener('dragover', (e) => {
+            fileDropArea.addEventListener('dragover', e => {
                 e.preventDefault();
                 fileDropArea.classList.add('drag-over');
             });
-            
-            fileDropArea.addEventListener('dragleave', () => {
-                fileDropArea.classList.remove('drag-over');
-            });
-            
-            fileDropArea.addEventListener('drop', (e) => {
+            fileDropArea.addEventListener('dragleave', () => fileDropArea.classList.remove('drag-over'));
+            fileDropArea.addEventListener('drop', e => {
                 e.preventDefault();
                 fileDropArea.classList.remove('drag-over');
-                if (e.dataTransfer.files.length) {
-                    handleFileSelect({ target: { files: e.dataTransfer.files } });
-                }
+                if (e.dataTransfer.files.length) handleFileSelect({ target: { files: e.dataTransfer.files } });
             });
 
-            // Split mode selection
-            splitModeRadios.forEach(radio => {
-                radio.addEventListener('change', updateInputFields);
-            });
-
-            // Audio extraction toggle
-            extractAudio.addEventListener('change', () => {
-                audioFormatOptions.classList.toggle('hidden', !extractAudio.checked);
-            });
-
-            // Marker buttons
+            // UI controls
+            splitModeRadios.forEach(r => r.addEventListener('change', updateInputFields));
+            extractAudio.addEventListener('change', () => audioFormatOptions.classList.toggle('hidden', !extractAudio.checked));
             addMarkerBtn.addEventListener('click', addMarkerAtCurrentTime);
             clearMarkersBtn.addEventListener('click', clearMarkers);
-
-            // Timeline click
             videoTimeline.addEventListener('click', handleTimelineClick);
-
-            // Presets
             preset15s.addEventListener('click', () => applyPreset(15));
             preset60s.addEventListener('click', () => applyPreset(60));
-
-            // Download buttons
+            processBtn.addEventListener('click', processVideo);
             downloadZipBtn.addEventListener('click', downloadAsZip);
-            downloadIndividualBtn.addEventListener('click', toggleIndividualDownloads);
-
-            // Cancel button
+            downloadIndividualBtn.addEventListener('click', () => individualDownloads.classList.toggle('hidden'));
             cancelBtn.addEventListener('click', () => {
                 cancelProcessing = true;
-                showErrorMessage('Processing canceled by user.');
-                hideProcessingSection();
+                showErrorMessage('Processing canceled.');
+                hideProcessing();
             });
 
-            // Initialize ffmpeg
-            initFFmpeg();
+            // Load ffmpeg
+            try {
+                ffmpeg = new FFmpeg();
+                await ffmpeg.load();
+            } catch (e) {
+                showErrorMessage('Failed to load video processor. Please refresh.');
+            }
         });
 
-        // Initialize ffmpeg.wasm
-        async function initFFmpeg() {
-            ffmpeg = new FFmpeg();
-            await ffmpeg.load();
-        }
-
-        // Handle file selection
         function handleFileSelect(e) {
             const files = e.target.files;
-            if (files.length === 0) return;
+            if (!files.length) return;
             
             const file = files[0];
             const validTypes = ['video/mp4', 'video/quicktime', 'video/x-matroska', 'video/x-msvideo', 'video/webm'];
-            
             if (!validTypes.includes(file.type)) {
-                showErrorMessage('Unsupported file format. Please upload MP4, MOV, MKV, AVI, or WebM files.');
+                showErrorMessage('Unsupported format. Use MP4, MOV, MKV, AVI, or WebM.');
                 return;
             }
-            
-            // Check file size (warn for large files)
-            if (file.size > 1000 * 1024 * 1024) { // 1GB
-                if (!confirm('This file is very large (>1GB). Processing might be slow or fail due to browser memory limits. Continue?')) {
-                    return;
-                }
+
+            if (file.size > 2e9) { // 2GB warning
+                if (!confirm('File is very large (>2GB). May fail due to browser limits. Continue?')) return;
             }
-            
+
             currentFile = file;
             const url = URL.createObjectURL(file);
             videoPreview.src = url;
             videoPreview.load();
-            
-            // Show preview section
-            previewSection.classList.remove('hidden');
-            optionsSection.classList.remove('hidden');
+            configSection.classList.remove('hidden');
+            processBtn.disabled = false;
             updateTimeline();
         }
 
-        // Update timeline display
         function updateTimeline() {
             videoPreview.addEventListener('loadedmetadata', () => {
                 videoTimeline.innerHTML = '';
                 const duration = videoPreview.duration;
                 if (isNaN(duration)) return;
                 
-                // Create progress bar
                 const progress = document.createElement('div');
                 progress.className = 'video-progress';
                 videoTimeline.appendChild(progress);
                 
-                // Update progress as video plays
                 videoPreview.addEventListener('timeupdate', () => {
                     const percent = (videoPreview.currentTime / duration) * 100;
                     progress.style.width = `${percent}%`;
@@ -417,58 +398,37 @@
             });
         }
 
-        // Handle timeline click to add marker
         function handleTimelineClick(e) {
             if (!currentFile) return;
-            
             const rect = videoTimeline.getBoundingClientRect();
-            const clickX = e.clientX - rect.left;
-            const percent = clickX / rect.width;
-            const time = percent * videoPreview.duration;
-            
+            const time = ((e.clientX - rect.left) / rect.width) * videoPreview.duration;
             addMarker(time);
         }
 
-        // Add marker at specific time
         function addMarker(time) {
-            // Remove existing marker at similar time (within 0.5s)
-            markers = markers.filter(marker => Math.abs(marker - time) > 0.5);
-            
-            // Add new marker
+            markers = markers.filter(m => Math.abs(m - time) > 0.5);
             markers.push(time);
             markers.sort((a, b) => a - b);
-            
-            // Update UI
             renderMarkers();
         }
 
-        // Add marker at current video time
         function addMarkerAtCurrentTime() {
-            if (videoPreview.currentTime > 0) {
-                addMarker(videoPreview.currentTime);
-            }
+            if (videoPreview.currentTime > 0) addMarker(videoPreview.currentTime);
         }
 
-        // Clear all markers
         function clearMarkers() {
             markers = [];
             renderMarkers();
         }
 
-        // Render markers on timeline
         function renderMarkers() {
-            // Remove existing markers
-            const existingMarkers = videoTimeline.querySelectorAll('.marker');
-            existingMarkers.forEach(marker => marker.remove());
-            
-            // Add markers
+            videoTimeline.querySelectorAll('.marker').forEach(el => el.remove());
             markers.forEach(time => {
                 const marker = document.createElement('div');
                 marker.className = 'marker';
                 marker.style.left = `${(time / videoPreview.duration) * 100}%`;
-                marker.addEventListener('click', (e) => {
+                marker.addEventListener('click', e => {
                     e.stopPropagation();
-                    // Remove this marker
                     markers = markers.filter(t => t !== time);
                     renderMarkers();
                 });
@@ -476,232 +436,130 @@
             });
         }
 
-        // Update input fields based on selected split mode
         function updateInputFields() {
-            const selectedMode = document.querySelector('input[name="splitMode"]:checked').value;
-            
-            timeInput.classList.toggle('hidden', selectedMode !== 'time');
-            partsInput.classList.toggle('hidden', selectedMode !== 'parts');
-            sizeInput.classList.toggle('hidden', selectedMode !== 'size');
+            const mode = document.querySelector('input[name="splitMode"]:checked').value;
+            timeInput.classList.toggle('hidden', mode !== 'time');
+            partsInput.classList.toggle('hidden', mode !== 'parts');
+            sizeInput.classList.toggle('hidden', mode !== 'size');
         }
 
-        // Apply social media presets
         function applyPreset(seconds) {
-            document.getElementById('splitTime').checked = true;
+            document.querySelector('#splitTime').checked = true;
             updateInputFields();
             document.getElementById('timeMinutes').value = Math.floor(seconds / 60);
             document.getElementById('timeSeconds').value = seconds % 60;
         }
 
-        // Show error message
-        function showErrorMessage(message) {
-            errorMessageText.textContent = message;
+        function showErrorMessage(msg) {
+            errorMessageText.textContent = msg;
             errorMessage.classList.remove('hidden');
-            setTimeout(() => {
-                errorMessage.classList.add('hidden');
-            }, 5000);
+            setTimeout(() => errorMessage.classList.add('hidden'), 5000);
         }
 
-        // Hide processing section
-        function hideProcessingSection() {
+        function hideProcessing() {
             processingSection.classList.add('hidden');
             isProcessing = false;
             cancelProcessing = false;
         }
 
-        // Toggle individual downloads
-        function toggleIndividualDownloads() {
-            individualDownloads.classList.toggle('hidden');
-        }
-
-        // Main processing function
         async function processVideo() {
             if (!currentFile || isProcessing) return;
-            
             isProcessing = true;
             cancelProcessing = false;
             processingSection.classList.remove('hidden');
             resultsSection.classList.add('hidden');
             progressFill.style.width = '0%';
-            progressText.textContent = 'Initializing...';
-            
+            progressText.textContent = 'Starting...';
+
             try {
-                // Get split parameters
-                const splitMode = document.querySelector('input[name="splitMode"]:checked').value;
+                const mode = document.querySelector('input[name="splitMode"]:checked').value;
                 const audioOnly = extractAudio.checked;
                 const audioFormat = audioOnly ? document.querySelector('input[name="audioFormat"]:checked').value : null;
-                
-                let splitPoints = [];
                 const duration = videoPreview.duration;
-                
-                // Calculate split points based on mode
-                if (splitMode === 'time') {
-                    const minutes = parseInt(document.getElementById('timeMinutes').value) || 0;
-                    const seconds = parseInt(document.getElementById('timeSeconds').value) || 0;
-                    const interval = minutes * 60 + seconds;
-                    
-                    if (interval <= 0) {
-                        throw new Error('Split interval must be greater than 0');
-                    }
-                    
-                    for (let i = interval; i < duration; i += interval) {
-                        splitPoints.push(i);
-                    }
-                } else if (splitMode === 'parts') {
-                    const numParts = parseInt(document.getElementById('numParts').value);
-                    if (numParts < 2) {
-                        throw new Error('Number of parts must be at least 2');
-                    }
-                    
-                    const partDuration = duration / numParts;
-                    for (let i = 1; i < numParts; i++) {
-                        splitPoints.push(i * partDuration);
-                    }
-                } else if (splitMode === 'size') {
-                    // For size-based splitting, we'll use a simplified approach
-                    // In a real app, this would require more complex calculations
-                    const maxSize = parseInt(document.getElementById('maxSize').value) * 1024 * 1024; // MB to bytes
-                    const estimatedParts = Math.ceil(currentFile.size / maxSize);
-                    const partDuration = duration / estimatedParts;
-                    
-                    for (let i = 1; i < estimatedParts; i++) {
-                        splitPoints.push(i * partDuration);
-                    }
+                let splitPoints = [];
+
+                if (mode === 'time') {
+                    const interval = (parseInt(document.getElementById('timeMinutes').value) || 0) * 60 + (parseInt(document.getElementById('timeSeconds').value) || 0);
+                    if (interval <= 0) throw new Error('Interval must be > 0');
+                    for (let t = interval; t < duration; t += interval) splitPoints.push(t);
+                } else if (mode === 'parts') {
+                    const n = parseInt(document.getElementById('numParts').value);
+                    if (n < 2) throw new Error('At least 2 parts required');
+                    const seg = duration / n;
+                    for (let i = 1; i < n; i++) splitPoints.push(i * seg);
+                } else if (mode === 'size') {
+                    const maxSizeMB = parseInt(document.getElementById('maxSize').value);
+                    const estParts = Math.ceil(currentFile.size / (maxSizeMB * 1024 * 1024));
+                    const seg = duration / estParts;
+                    for (let i = 1; i < estParts; i++) splitPoints.push(i * seg);
                 }
-                
-                // Add manual markers to split points
-                splitPoints = [...splitPoints, ...markers].sort((a, b) => a - b);
-                
-                // Remove duplicates and points outside duration
-                splitPoints = [...new Set(splitPoints)].filter(t => t > 0 && t < duration);
-                
-                // Add start and end points
-                const allPoints = [0, ...splitPoints, duration];
-                
-                // Process each segment
-                const outputFiles = [];
-                progressText.textContent = `Splitting into ${allPoints.length - 1} clips...`;
-                
-                for (let i = 0; i < allPoints.length - 1; i++) {
+
+                splitPoints = [...new Set([...splitPoints, ...markers])].filter(t => t > 0 && t < duration).sort((a, b) => a - b);
+                const points = [0, ...splitPoints, duration];
+                const outputs = [];
+
+                for (let i = 0; i < points.length - 1; i++) {
                     if (cancelProcessing) break;
-                    
-                    const start = allPoints[i];
-                    const end = allPoints[i + 1];
-                    const segmentDuration = end - start;
-                    
-                    // Update progress
-                    const progress = ((i + 1) / (allPoints.length - 1)) * 100;
+                    const start = points[i], end = points[i + 1];
+                    const progress = ((i + 1) / (points.length - 1)) * 100;
                     progressFill.style.width = `${progress}%`;
-                    progressText.textContent = `Processing clip ${i + 1} of ${allPoints.length - 1}...`;
-                    
-                    // Create file name
-                    const extension = audioOnly ? 
-                        (audioFormat === 'mp3' ? 'mp3' : 'wav') : 
-                        currentFile.name.split('.').pop();
-                    const fileName = `${currentFile.name.split('.')[0]}_part${i + 1}.${extension}`;
-                    
-                    // Write input file to ffmpeg
+                    progressText.textContent = `Processing clip ${i + 1} of ${points.length - 1}...`;
+
+                    const ext = audioOnly ? (audioFormat === 'mp3' ? 'mp3' : 'wav') : currentFile.name.split('.').pop();
+                    const name = `${currentFile.name.replace(/\.[^/.]+$/, '')}_part${i + 1}.${ext}`;
+
                     await ffmpeg.writeFile('input', new Uint8Array(await currentFile.arrayBuffer()));
-                    
-                    // Build ffmpeg command
-                    let command = [
-                        '-i', 'input',
-                        '-ss', start.toString(),
-                        '-to', end.toString(),
-                        '-c', 'copy'
-                    ];
-                    
-                    // Handle audio extraction
-                    if (audioOnly) {
-                        command = [
-                            '-i', 'input',
-                            '-ss', start.toString(),
-                            '-to', end.toString(),
-                            '-q:a', '0',
-                            '-map', 'a'
-                        ];
-                        
-                        if (audioFormat === 'mp3') {
-                            command.push('-f', 'mp3');
-                        } else {
-                            command.push('-f', 'wav');
-                        }
-                    }
-                    
-                    command.push('output');
-                    
-                    // Run ffmpeg
-                    await ffmpeg.run(...command);
-                    
-                    // Read output file
+                    const cmd = audioOnly
+                        ? ['-i', 'input', '-ss', start, '-to', end, '-q:a', '0', '-map', 'a', ...(audioFormat === 'mp3' ? ['-f', 'mp3'] : ['-f', 'wav']), 'output']
+                        : ['-i', 'input', '-ss', start, '-to', end, '-c', 'copy', 'output'];
+
+                    await ffmpeg.run(...cmd);
                     const data = await ffmpeg.readFile('output');
-                    outputFiles.push({ name: fileName, data: new Uint8Array(data) });
-                    
-                    // Clean up
+                    outputs.push({ name, data: new Uint8Array(data) });
                     await ffmpeg.deleteFile('output');
                 }
-                
-                if (cancelProcessing) {
-                    hideProcessingSection();
-                    return;
-                }
-                
-                // Show results
-                clipCount.textContent = outputFiles.length;
+
+                if (cancelProcessing) return;
+
+                window.outputFiles = outputs;
+                clipCount.textContent = outputs.length;
                 resultsSection.classList.remove('hidden');
                 processingSection.classList.add('hidden');
-                
-                // Store output files for download
-                window.outputFiles = outputFiles;
-                
-                // Generate individual download links
+
                 individualDownloads.innerHTML = '';
-                outputFiles.forEach((file, index) => {
+                outputs.forEach((f, i) => {
                     const btn = document.createElement('button');
-                    btn.className = 'px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-lg font-medium transition-colors';
-                    btn.textContent = `Download ${file.name}`;
+                    btn.className = 'px-4 py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 rounded-lg font-medium transition-colors';
+                    btn.textContent = f.name;
                     btn.onclick = () => {
-                        const blob = new Blob([file.data], { type: 'application/octet-stream' });
+                        const blob = new Blob([f.data], { type: 'application/octet-stream' });
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
-                        a.download = file.name;
-                        document.body.appendChild(a);
+                        a.download = f.name;
                         a.click();
-                        document.body.removeChild(a);
                         URL.revokeObjectURL(url);
                     };
                     individualDownloads.appendChild(btn);
                 });
-                
-            } catch (error) {
-                console.error('Processing error:', error);
-                if (!cancelProcessing) {
-                    showErrorMessage(`Processing failed: ${error.message || 'Unknown error'}`);
-                }
-                hideProcessingSection();
+
+            } catch (err) {
+                console.error(err);
+                if (!cancelProcessing) showErrorMessage(err.message || 'Processing failed. Try a smaller file.');
+                hideProcessing();
             }
         }
 
-        // Download as ZIP
         async function downloadAsZip() {
             if (!window.outputFiles) return;
-            
             const zip = new JSZip();
-            
-            window.outputFiles.forEach(file => {
-                zip.file(file.name, file.data);
-            });
-            
+            window.outputFiles.forEach(f => zip.file(f.name, f.data));
             const blob = await zip.generateAsync({ type: 'blob' });
             const url = URL.createObjectURL(blob);
-            
             const a = document.createElement('a');
             a.href = url;
-            a.download = `${currentFile.name.split('.')[0]}_split.zip`;
-            document.body.appendChild(a);
+            a.download = `${currentFile.name.replace(/\.[^/.]+$/, '')}_split.zip`;
             a.click();
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
         }
     </script>
